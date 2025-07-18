@@ -110,33 +110,110 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 class="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-12">Our Previous Works</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8" id="portfolio-items">
-        <!-- Sample Portfolio Items -->
-        <div class="bg-white rounded-lg shadow-md overflow-hidden portfolio-item">
-          <iframe src="https://docs.google.com/viewer?url=https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf&embedded=true" class="pdf-viewer w-full h-96 border-none" title="Menu Card Design PDF"></iframe>
-          <div class="p-4">
-            <h3 class="text-base sm:text-lg font-semibold">Menu Design</h3>
-            <p class="text-gray-600 text-sm sm:text-base">Elegant Menu.</p>
-            <a href="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" download class="download-btn bg-green-600 text-white px-2 py-1 rounded mt-2 hover:bg-green-700 text-sm sm:text-base">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-              Download
-            </a>
-          </div>
-        </div>
-        <div class="bg-white rounded-lg shadow-md overflow-hidden portfolio-item">
-          <iframe src="https://docs.google.com/viewer?url=https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf&embedded=true" class="pdf-viewer w-full h-96 border-none" title="Hotel Menu Design PDF"></iframe>
-          <div class="p-4">
-            <h3 class="text-base sm:text-lg font-semibold">Hotel Menu Design</h3>
-            <p class="text-gray-600 text-sm sm:text-base">Luxurious Menu.</p>
-            <a href="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" download class="download-btn bg-green-600 text-white px-2 py-1 rounded mt-2 hover:bg-green-700 text-sm sm:text-base">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-              Download
-            </a>
-          </div>
-        </div>
+      </div>
+      <div class="mt-12 text-center hidden" id="upload-section">
+        <h3 class="text-lg sm:text-xl font-semibold mb-4">Upload Your Work</h3>
+        <input type="file" accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,video/*" id="portfolio-upload" class="mb-4 text-sm sm:text-base">
+        <button onclick="uploadPortfolio()" class="bg-indigo-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-indigo-700 text-sm sm:text-base">Upload</button>
       </div>
     </div>
   </section>
-           
+  <script>
+    const ADMIN_PASSWORD = "admin123"; // Change to a secure password
+    let isAdminLoggedIn = false;
+
+    function toggleAdminLogin() {
+      const modal = document.getElementById('admin-modal');
+      modal.classList.toggle('hidden');
+    }
+
+    function adminLogin() {
+      const password = document.getElementById('admin-password').value;
+      if (password === ADMIN_PASSWORD) {
+        isAdminLoggedIn = true;
+        document.getElementById('admin-login-btn').textContent = 'Admin Logout';
+        document.getElementById('upload-section').classList.remove('hidden');
+        toggleAdminLogin();
+        document.getElementById('admin-password').value = '';
+        alert('Logged in as admin!');
+      } else {
+        alert('Incorrect password!');
+      }
+    }
+
+    function toggleAdminLogout() {
+      isAdminLoggedIn = false;
+      document.getElementById('admin-login-btn').textContent = 'Admin Login';
+      document.getElementById('upload-section').classList.add('hidden');
+    }
+
+    document.getElementById('admin-login-btn').onclick = function() {
+      if (isAdminLoggedIn) {
+        toggleAdminLogout();
+      } else {
+        toggleAdminLogin();
+      }
+    };
+
+    function uploadPortfolio() {
+      if (!isAdminLoggedIn) {
+        alert('Please log in as admin to upload.');
+        return;
+      }
+      const fileInput = document.getElementById('portfolio-upload');
+      const file = fileInput.files[0];
+      if (file) {
+        const portfolioItems = document.getElementById('portfolio-items');
+        const div = document.createElement('div');
+        div.className = 'bg-white rounded-lg shadow-md overflow-hidden portfolio-item';
+
+        if (file.type === 'application/pdf' || file.type === 'application/msword' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+          const iframe = document.createElement('iframe');
+          iframe.src = `https://docs.google.com/viewer?url=${encodeURIComponent(URL.createObjectURL(file))}&embedded=true`;
+          iframe.className = 'pdf-viewer w-full h-96 border-none';
+          iframe.title = `${file.name} Viewer`;
+          div.appendChild(iframe);
+        } else if (file.type.startsWith('video/')) {
+          const videoContainer = document.createElement('div');
+          videoContainer.className = 'video-container';
+          const video = document.createElement('video');
+          video.src = URL.createObjectURL(file);
+          video.controls = true;
+          video.className = 'w-full h-48 object-cover';
+          videoContainer.appendChild(video);
+          div.appendChild(videoContainer);
+        }
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'p-4';
+        contentDiv.innerHTML = `
+          <h3 class="text-base sm:text-lg font-semibold">${file.name}</h3>
+          <p class="text-gray-600 text-sm sm:text-base">Uploaded by Way To Grow</p>
+          <a href="${URL.createObjectURL(file)}" download class="download-btn bg-green-600 text-white px-2 py-1 rounded mt-2 hover:bg-green-700 text-sm sm:text-base">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            Download
+          </a>
+          <button class="delete-btn bg-red-600 text-white px-2 py-1 rounded mt-2 hover:bg-red-700 text-sm sm:text-base" onclick="deletePortfolioItem(this)">Delete</button>
+        `;
+        div.appendChild(contentDiv);
+        portfolioItems.prepend(div);
+        fileInput.value = '';
+        alert('Portfolio item uploaded successfully!');
+      } else {
+        alert('Please select a file to upload.');
+      }
+    }
+
+    function deletePortfolioItem(button) {
+      if (!isAdminLoggedIn) {
+        alert('Please log in as admin to delete.');
+        return;
+      }
+      const portfolioItem = button.closest('.portfolio-item');
+      portfolioItem.remove();
+      alert('Portfolio item deleted successfully!');
+    }
+  </script>
               
             
            
