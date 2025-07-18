@@ -110,6 +110,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 class="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-12">Our Previous Works</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8" id="portfolio-items">
+        <!-- Files will be added here by admin upload -->
       </div>
       <div class="mt-12 text-center hidden" id="upload-section">
         <h3 class="text-lg sm:text-xl font-semibold mb-4">Upload Your Work</h3>
@@ -122,6 +123,46 @@
     const ADMIN_PASSWORD = "admin123"; // Change to a secure password
     let isAdminLoggedIn = false;
 
+    // Load existing portfolio items from localStorage on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedItems = JSON.parse(localStorage.getItem('portfolioItems') || '[]');
+      const portfolioItems = document.getElementById('portfolio-items');
+      savedItems.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'bg-white rounded-lg shadow-md overflow-hidden portfolio-item';
+        if (item.type.startsWith('application/')) {
+          const iframe = document.createElement('iframe');
+          iframe.src = item.url;
+          iframe.className = 'pdf-viewer w-full h-96 border-none';
+          iframe.title = `${item.name} Viewer`;
+          div.appendChild(iframe);
+        } else if (item.type.startsWith('video/')) {
+          const videoContainer = document.createElement('div');
+          videoContainer.className = 'video-container';
+          const video = document.createElement('video');
+          video.src = item.url;
+          video.controls = true;
+          video.className = 'w-full h-48 object-cover';
+          videoContainer.appendChild(video);
+          div.appendChild(videoContainer);
+        }
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'p-4';
+        contentDiv.innerHTML = `
+          <h3 class="text-base sm:text-lg font-semibold">${item.name}</h3>
+          <p class="text-gray-600 text-sm sm:text-base">Uploaded by Way To Grow</p>
+          <a href="${item.url}" download class="download-btn bg-green-600 text-white px-2 py-1 rounded mt-2 hover:bg-green-700 text-sm sm:text-base">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            Download
+          </a>
+          <button class="hidden delete-btn bg-red-600 text-white px-2 py-1 rounded mt-2 hover:bg-red-700 text-sm sm:text-base" onclick="deletePortfolioItem(this)">Delete</button>
+        `;
+        div.appendChild(contentDiv);
+        if (isAdminLoggedIn) div.querySelector('.delete-btn').classList.remove('hidden');
+        portfolioItems.appendChild(div);
+      });
+    });
+
     function toggleAdminLogin() {
       const modal = document.getElementById('admin-modal');
       modal.classList.toggle('hidden');
@@ -133,6 +174,7 @@
         isAdminLoggedIn = true;
         document.getElementById('admin-login-btn').textContent = 'Admin Logout';
         document.getElementById('upload-section').classList.remove('hidden');
+        document.querySelectorAll('.delete-btn').forEach(btn => btn.classList.remove('hidden'));
         toggleAdminLogin();
         document.getElementById('admin-password').value = '';
         alert('Logged in as admin!');
@@ -145,6 +187,7 @@
       isAdminLoggedIn = false;
       document.getElementById('admin-login-btn').textContent = 'Admin Login';
       document.getElementById('upload-section').classList.add('hidden');
+      document.querySelectorAll('.delete-btn').forEach(btn => btn.classList.add('hidden'));
     }
 
     document.getElementById('admin-login-btn').onclick = function() {
@@ -166,10 +209,11 @@
         const portfolioItems = document.getElementById('portfolio-items');
         const div = document.createElement('div');
         div.className = 'bg-white rounded-lg shadow-md overflow-hidden portfolio-item';
+        const tempUrl = URL.createObjectURL(file);
 
         if (file.type === 'application/pdf' || file.type === 'application/msword' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
           const iframe = document.createElement('iframe');
-          iframe.src = `https://docs.google.com/viewer?url=${encodeURIComponent(URL.createObjectURL(file))}&embedded=true`;
+          iframe.src = `https://docs.google.com/viewer?url=${encodeURIComponent(tempUrl)}&embedded=true`;
           iframe.className = 'pdf-viewer w-full h-96 border-none';
           iframe.title = `${file.name} Viewer`;
           div.appendChild(iframe);
@@ -177,7 +221,7 @@
           const videoContainer = document.createElement('div');
           videoContainer.className = 'video-container';
           const video = document.createElement('video');
-          video.src = URL.createObjectURL(file);
+          video.src = tempUrl;
           video.controls = true;
           video.className = 'w-full h-48 object-cover';
           videoContainer.appendChild(video);
@@ -189,16 +233,23 @@
         contentDiv.innerHTML = `
           <h3 class="text-base sm:text-lg font-semibold">${file.name}</h3>
           <p class="text-gray-600 text-sm sm:text-base">Uploaded by Way To Grow</p>
-          <a href="${URL.createObjectURL(file)}" download class="download-btn bg-green-600 text-white px-2 py-1 rounded mt-2 hover:bg-green-700 text-sm sm:text-base">
+          <a href="${tempUrl}" download class="download-btn bg-green-600 text-white px-2 py-1 rounded mt-2 hover:bg-green-700 text-sm sm:text-base">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
             Download
           </a>
           <button class="delete-btn bg-red-600 text-white px-2 py-1 rounded mt-2 hover:bg-red-700 text-sm sm:text-base" onclick="deletePortfolioItem(this)">Delete</button>
         `;
         div.appendChild(contentDiv);
-        portfolioItems.prepend(div);
+        portfolioItems.appendChild(div);
+
+        // Save to localStorage for session persistence
+        const savedItems = JSON.parse(localStorage.getItem('portfolioItems') || '[]');
+        savedItems.push({ name: file.name, type: file.type, url: tempUrl });
+        localStorage.setItem('portfolioItems', JSON.stringify(savedItems));
+
+        // Alert to manually save the file
+        alert('File uploaded temporarily. Please download it, upload to your repository (e.g., assets/) or external service (e.g., Google Drive), and update the HTML with the permanent URL.');
         fileInput.value = '';
-        alert('Portfolio item uploaded successfully!');
       } else {
         alert('Please select a file to upload.');
       }
@@ -210,11 +261,14 @@
         return;
       }
       const portfolioItem = button.closest('.portfolio-item');
+      const itemName = portfolioItem.querySelector('h3').textContent;
       portfolioItem.remove();
+      let savedItems = JSON.parse(localStorage.getItem('portfolioItems') || '[]');
+      savedItems = savedItems.filter(item => item.name !== itemName);
+      localStorage.setItem('portfolioItems', JSON.stringify(savedItems));
       alert('Portfolio item deleted successfully!');
     }
   </script>
-              
             
            
       <!-- Upload Portfolio Form -->
